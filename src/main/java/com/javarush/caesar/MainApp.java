@@ -6,6 +6,7 @@ import com.javarush.caesar.exception.CipherException;
 import com.javarush.caesar.service.FileManager;
 import com.javarush.caesar.service.Validator;
 
+import java.io.IOException;
 import java.util.Scanner;
 
 public class MainApp {
@@ -49,7 +50,7 @@ public class MainApp {
                     default:
                         System.out.println("Нет такого пункта: " + choice);
                 }
-            } catch (CipherException e) {
+            } catch (CipherException | IOException e) {
                 System.out.println("Ошибка: " + e.getMessage());
             }
         }
@@ -63,22 +64,61 @@ public class MainApp {
         System.out.println("0. Выход (или exit)");
     }
 
-    private void encryptFile() throws CipherException {
-        // TODO спросить исходный файл, файл для результата и ключ
-        //  проверить их через validator, прочитать текст через fileManager,
-        //  зашифровать через cipher и записать результат
-        System.out.println("Режим пока не реализован");
+    private void encryptFile() throws CipherException, IOException {
+
+        String sourceFile = ask("Введите адрес исходного файла: ");
+
+        String keyInput = ask("Введите ключ: ");
+        int key = Integer.parseInt(keyInput);
+
+        String destinationFile = ask("Введите адрес файла для записи: ");
+
+        fileManager.checkIfPathIsDifferent(sourceFile, destinationFile);
+
+        if (validator.isValidKey(key, ALPHABET) && validator.isFileExists(sourceFile)) {
+
+            fileManager.writeFile(cipher.encrypt(fileManager.readFile(sourceFile), key), destinationFile);
+
+        } else {
+            throw new CipherException("Ключ должен быть от нуля и до " + ALPHABET.length);
+        }
     }
 
     private void decryptFile() throws CipherException {
-        // TODO то же, что в encryptFile, только расшифровка
-        System.out.println("Режим пока не реализован");
+
+        String sourceFile = ask("Введите адрес файла с текстом: ");
+
+        String keyInput = ask("Введите ключ: ");
+        int key = Integer.parseInt(keyInput);
+
+        String destinationFile = ask("Введите адрес файла для записи: ");
+
+
+        fileManager.checkIfPathIsDifferent(sourceFile, destinationFile);
+
+        if (validator.isValidKey(key, ALPHABET) && validator.isFileExists(sourceFile)) {
+
+            fileManager.writeFile(cipher.decrypt(fileManager.readFile(sourceFile), key), destinationFile);
+
+        } else {
+            throw new CipherException("Ключ должен быть от нуля и до " + ALPHABET.length);
+        }
+
     }
 
     private void bruteForceFile() throws CipherException {
-        // TODO спросить зашифрованный файл и файл для результата,
-        //  подобрать ключ через bruteForce и записать расшифрованный текст
-        System.out.println("Режим пока не реализован");
+        String sourceFile = ask("Введите адрес файла с текстом: ");
+        String destinationFile = ask("Введите адрес файла для записи: ");
+
+        fileManager.checkIfPathIsDifferent(sourceFile, destinationFile);
+
+        if (validator.isFileExists(sourceFile)) {
+            String encryptedText = fileManager.readFile(sourceFile);
+            String decryptedText = bruteForce.decryptByBruteForce(encryptedText, ALPHABET);
+            fileManager.writeFile(decryptedText, destinationFile);
+        } else {
+            throw new CipherException("Исходный файл не найден");
+        }
     }
 
     private String ask(String prompt) {
